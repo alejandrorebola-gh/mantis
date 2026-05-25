@@ -10,7 +10,7 @@ A simple browser-based calculator for evaluating Mantis criteria scores from JSO
    Preview Eval Responses
    ```
 
-2. Click the three dots (`⋮`) and copy the response JSON.
+2. Click the three dots (`...`) and copy the response JSON.
 
 3. Paste the JSON into the top text box of the calculator.
 
