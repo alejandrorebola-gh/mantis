@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Criteria Score Calculator</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #fafafa;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 240px;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 12px;
+      margin-right: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+      text-align: left;
+      transition: background-color 0.2s ease;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 4px;
+    }
+
+    .total-box {
+      margin-top: 25px;
+      padding: 15px;
+      background: white;
+      border: 1px solid #ccc;
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.6;
+    }
+
+    .criterion-title {
+      max-width: 500px;
+    }
+
+    .justification {
+      max-width: 500px;
+      font-size: 13px;
+      color: #444;
+    }
+
+    /* Row colors */
+
+    .row-green td {
+      background-color: #d4edda;
+    }
+
+    .row-red td {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Criteria Score Calculator</h1>
+
+  <p>Paste your JSON below:</p>
+
+  <textarea id="jsonInput"></textarea>
+
+  <br>
+
+  <button onclick="loadCriteria()">Load Criteria</button>
+
+  <div id="output"></div>
+
+  <div class="total-box" id="totalScore"></div>
+
+  <script>
+
+    function loadCriteria() {
+
+      const input = document.getElementById("jsonInput").value;
+      const output = document.getElementById("output");
+      const totalBox = document.getElementById("totalScore");
+
+      output.innerHTML = "";
+      totalBox.innerHTML = "";
+
+      let data;
+
+      try {
+        data = JSON.parse(input);
+      } catch (error) {
+        output.innerHTML =
+          "<p style='color:red; font-weight:bold;'>Invalid JSON format.</p>";
+        return;
+      }
+
+      const entries = Object.entries(data);
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Criterion</th>
+              <th>Weight</th>
+              <th>Score</th>
+              <th>Weighted Score</th>
+              <th>Justification</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      entries.forEach(([id, item], index) => {
+
+        const weight = Number(item.weight) || 0;
+        const score = Number(item.score) || 0;
+
+        html += `
+          <tr>
+
+            <td>
+              ${index + 1}
+            </td>
+
+            <td class="criterion-title">
+              ${escapeHtml(item.title || "")}
+            </td>
+
+            <td class="weight">
+              ${weight}
+            </td>
+
+            <td>
+              <input
+                type="number"
+                class="score"
+                value="${score}"
+                step="0.1"
+              >
+            </td>
+
+            <td class="weighted"></td>
+
+            <td class="justification">
+              ${escapeHtml(item.justification || "")}
+            </td>
+
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+
+        <button onclick="calculateTotal()">
+          Recalculate Total
+        </button>
+      `;
+
+      output.innerHTML = html;
+
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+
+      const rows = document.querySelectorAll("tbody tr");
+
+      let total = 0;
+      let maxScore = 0;
+
+      rows.forEach(row => {
+
+        const weight =
+          Number(row.querySelector(".weight").textContent) || 0;
+
+        const score =
+          Number(row.querySelector(".score").value) || 0;
+
+        const weighted = weight * score;
+
+        row.querySelector(".weighted").textContent =
+          weighted.toFixed(2);
+
+        total += weighted;
+
+        // Only positive weights contribute to maximum score
+        if (weight > 0) {
+          maxScore += weight;
+        }
+
+        // Remove previous color classes
+        row.classList.remove("row-green");
+        row.classList.remove("row-red");
+
+        // Color rows
+        if (score === 1) {
+          row.classList.add("row-green");
+        }
+        else if (score === 0) {
+          row.classList.add("row-red");
+        }
+
+      });
+
+      const percentage =
+        maxScore !== 0
+          ? (100 * total / maxScore)
+          : 0;
+
+      document.getElementById("totalScore").innerHTML = `
+        Total score: ${total.toFixed(2)}<br>
+        Maximum possible score: ${maxScore.toFixed(2)}<br>
+        Normalized score: ${percentage.toFixed(2)}%
+      `;
+    }
+
+    function escapeHtml(text) {
+
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+  </script>
+
+</body>
+</html>
