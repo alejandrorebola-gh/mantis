@@ -1,0 +1,2 @@
+# mantis
+Mantis Score Calculator
